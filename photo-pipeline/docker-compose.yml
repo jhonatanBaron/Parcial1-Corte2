@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    hostname: rabbitmq
+
+  api:
+    build: ./api
+    volumes:
+      - ./images:/app/uploads
+    ports:
+      - "3000:3000"
+    depends_on:
+      - rabbitmq
+
+  resize:
+    build: ./workers
+    command: node resize.js
+    depends_on:
+      - rabbitmq
+
+  watermark:
+    build: ./workers
+    command: node watermark.js
+    depends_on:
+      - rabbitmq
+
+  detect:
+    build: ./workers
+    command: node detect.js
+    depends_on:
+      - rabbitmq
+
+  notifier:
+    build: ./notifier
+    command: node notify.js
+    depends_on:
+      - rabbitmq
