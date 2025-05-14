@@ -1,0 +1,132 @@
+##version: '3'
+
+##services:
+  ##rabbitmq:
+    ##image: rabbitmq:3-management
+    ##ports:
+      ##- "5672:5672"
+      ##- "15672:15672"
+    ##hostname: rabbitmq
+
+  ##api:
+    ##build: ./api
+    ##volumes:
+      ##- ./images:/app/uploads
+    ##ports:
+##      - "3000:3000"
+  ##  depends_on:
+    ##  - rabbitmq
+
+  ##resize:
+    ##build: ./workers
+    ##command: node resize.js
+    ##depends_on:
+      ##- rabbitmq
+
+  ##watermark:
+    ##build: ./workers
+    ##command: node watermark.js
+    ##depends_on:
+##      - rabbitmq
+
+  ##detect:
+    ##build: ./workers
+    ##command: node detect.js
+##    depends_on:
+  ##    - rabbitmq
+
+  ##notifier:
+    ##build: ./notifier
+    ##command: node notify.js
+    ##depends_on:
+     ## - rabbitmq
+
+version: '3.9'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - app-network
+
+  api:
+    build: ./api
+    container_name: api
+    volumes:
+      - ./images:/app/images
+    ports:
+      - "3000:3000"
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq
+      - IMAGE_DIR=/app/images
+    depends_on:
+      - rabbitmq
+    networks:
+      - app-network
+
+  resize_worker:
+    build:
+      context: ./workers
+    container_name: resize_worker
+    command: node resize.js
+    volumes:
+      - ./images:/app/images
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq
+      - IMAGE_DIR=/app/images
+    depends_on:
+      - rabbitmq
+    networks:
+      - app-network
+
+  watermark_worker:
+    build:
+      context: ./workers
+    container_name: watermark_worker
+    command: node watermark.js
+    volumes:
+      - ./images:/app/images
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq
+      - IMAGE_DIR=/app/images
+    depends_on:
+      - rabbitmq
+    networks:
+      - app-network
+
+  detect_worker:
+    build:
+      context: ./workers
+    container_name: detect_worker
+    command: node detect.js
+    volumes:
+      - ./images:/app/images
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq
+      - IMAGE_DIR=/app/images
+    depends_on:
+      - rabbitmq
+    networks:
+      - app-network
+
+  notifier:
+    build: ./notifier
+    container_name: notifier
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq
+    depends_on:
+      - rabbitmq
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+

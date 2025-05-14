@@ -5,7 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fs = require('fs');
 const { updateStatus, getStatus } = require('./statusStore');
-const { RABBITMQ_URL, IMAGE_DIR } = require('../shared/config');
+const { RABBITMQ_URL, IMAGE_DIR } = require('../photo-pipeline/shared/config');
 
 const app = express();
 const port = 3000;
